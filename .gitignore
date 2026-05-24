@@ -1,22 +1,20 @@
-# Python Artifacts
+
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
 
-# Environments & Secrets
 venv/
 .venv/
 env/
 .env
 secrets.json
 
-# ExtensionGuard Specific Artifacts
 temp_uploads/
 reports/
 *.vsix
 *.yarac
 
-# OS Generated Files
+
 .DS_Store
 Thumbs.db
