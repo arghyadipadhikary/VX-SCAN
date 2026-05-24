@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Guard</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-red: #ff003c;
+            --neon-green: #39ff14;
+            --neon-yellow: #ffb000;
+            --dark-bg: #050505;
+            --panel-bg: rgba(10, 15, 20, 0.85);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background-color: var(--dark-bg);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .container {
+            background: var(--panel-bg);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+
+        .container::before, .container::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid var(--neon-blue);
+        }
+        .container::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .container::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+        h2 {
+            color: var(--neon-blue);
+            margin-top: 0;
+            font-weight: normal;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            border-bottom: 1px dashed var(--neon-blue);
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        h2::after {
+            content: "[v1.0.0]";
+            font-size: 12px;
+            align-self: flex-end;
+            color: #555;
+        }
+
+        .input-group {
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .input-group::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            top: 12px;
+            color: var(--neon-blue);
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 12px 12px 25px;
+            background-color: rgba(0, 243, 255, 0.02);
+            border: none;
+            border-bottom: 2px solid #333;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-bottom: 2px solid var(--neon-blue);
+            box-shadow: 0 4px 10px -5px var(--neon-blue);
+            background-color: rgba(0, 243, 255, 0.05);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background-color: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 3px solid #555;
+            display: none;
+            animation: bootUp 0.5s ease-out;
+        }
+
+        @keyframes bootUp {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .data-row {
+            margin: 10px 0;
+            font-size: 14px;
+            display: flex;
+        }
+
+        .data-label {
+            color: #888;
+            width: 140px;
+            flex-shrink: 0;
+        }
+
+        .data-value {
+            flex-grow: 1;
+        }
+
+        .safe { 
+            color: var(--neon-green); 
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.6);
+            font-weight: bold;
+        }
+        
+        .suspicious { 
+            color: var(--neon-yellow); 
+            text-shadow: 0 0 8px rgba(255, 176, 0, 0.6);
+            font-weight: bold;
+        }
+
+        .harmful { 
+            color: var(--neon-red); 
+            text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
+            font-weight: bold;
+        }
+
+        .nlp-block {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #aaa;
+            background: #111;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+
+        .nlp-line {
+            color: var(--neon-blue);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .nlp-line::before {
+            content: "[*] ";
+            color: #555;
+        }
+
+        .download-btn {
+            display: block;
+            margin-top: 25px;
+            padding: 12px;
+            background-color: transparent;
+            color: #fff;
+            text-decoration: none;
+            border: 1px dashed #555;
+            text-align: center;
+            box-sizing: border-box;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+        
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>SYS.DEFENSE // Ext_Scanner</h2>
+    
+    <div class="input-group">
+        <input type="text" id="extInput" placeholder="AWAITING TARGET ID (e.g. ms-python.python)" autocomplete="off">
+    </div>
+    
+    <button onclick="scanExtension()">Initialize Scan Protocol</button>
+
+    <div id="results">
+        <div class="data-row">
+            <span class="data-label">TARGET_ID:</span>
+            <span id="resTarget" class="data-value"></span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">PUBLISHER:</span>
+            <span id="resPublisher" class="data-value"></span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">RISK_SCORE:</span>
+            <span id="resScore" class="data-value"></span>
+        </div>
+        
+        <div id="nlpContainer" class="nlp-block" style="display: none;">
+            <div style="color: #888; margin-bottom: 5px;">NLP_BEHAVIORAL_ANALYSIS:</div>
+            <div id="resNLP"></div>
+        </div>
+
+        <div class="data-row" style="margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px;">
+            <span class="data-label">THREAT_LEVEL:</span>
+            <span id="resStatus" class="blink">ANALYZING...</span>
+        </div>
+        
+        <a id="downloadLink" class="download-btn" href="#" target="_blank" style="display:none;">[ DOWNLOAD INTELLIGENCE REPORT .PDF ]</a>
+    </div>
+</div>
+
+<script>
+    async function scanExtension() {
+        const extId = document.getElementById('extInput').value.trim();
+        const resultsDiv = document.getElementById('results');
+        const statusEl = document.getElementById('resStatus');
+        const downloadBtn = document.getElementById('downloadLink');
+        const nlpContainer = document.getElementById('nlpContainer');
+        const resNLP = document.getElementById('resNLP');
+        
+        if (!extId) {
+            statusEl.innerText = "ERROR: NO TARGET SPECIFIED";
+            statusEl.className = "harmful";
+            resultsDiv.style.display = 'block';
+            resultsDiv.style.borderLeftColor = 'var(--neon-red)';
+            return;
+        }
+        
+        // Reset UI for new scan
+        downloadBtn.style.display = 'none';
+        nlpContainer.style.display = 'none';
+        resultsDiv.style.display = 'block';
+        resultsDiv.style.borderLeftColor = 'var(--neon-blue)';
+        statusEl.innerText = "EXECUTING STATIC & NLP ANALYSIS...";
+        statusEl.className = "blink";
+        document.getElementById('resTarget').innerText = extId;
+        document.getElementById('resPublisher').innerText = "FETCHING...";
+        document.getElementById('resScore').innerText = "CALCULATING...";
+        resNLP.innerHTML = "";
+        
+        try {
+            const response = await fetch('/api/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ extension_id: extId })
+            });
+            
+            if (!response.ok) throw new Error("SERVER_FAULT");
+            
+            const data = await response.json();
+            
+            document.getElementById('resPublisher').innerText = data.publisher || "UNKNOWN_ENTITY";
+            document.getElementById('resScore').innerText = (data.risk_score || 0) + " / 10";
+            
+            // Remove blink animation
+            statusEl.className = ""; 
+            
+            if (data.classification === "SAFE") {
+                statusEl.innerText = "VERIFIED SAFE";
+                statusEl.classList.add("safe");
+                resultsDiv.style.borderLeftColor = "var(--neon-green)";
+            } else if (data.classification === "SUSPICIOUS") {
+                statusEl.innerText = "ANOMALY DETECTED // SUSPICIOUS";
+                statusEl.classList.add("suspicious");
+                resultsDiv.style.borderLeftColor = "var(--neon-yellow)";
+            } else {
+                statusEl.innerText = "CRITICAL THREAT DETECTED";
+                statusEl.classList.add("harmful");
+                resultsDiv.style.borderLeftColor = "var(--neon-red)";
+            }
+
+            // Print NLP Insights
+            if (data.nlp_insights && data.nlp_insights.length > 0) {
+                nlpContainer.style.display = "block";
+                data.nlp_insights.forEach(insight => {
+                    const span = document.createElement("span");
+                    span.className = "nlp-line";
+                    span.innerText = insight;
+                    resNLP.appendChild(span);
+                });
+            }
+            
+            if (data.report_url) {
+                downloadBtn.href = data.report_url;
+                downloadBtn.style.display = 'block';
+            }
+        } catch (error) {
+            statusEl.innerText = "SYSTEM_FAILURE: UNABLE TO COMPLETE SCAN";
+            statusEl.className = "harmful";
+            resultsDiv.style.borderLeftColor = 'var(--neon-red)';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  scanner-backend:
+    build: 
+      context: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./temp_uploads:/app/temp_uploads:Z
+      - ./reports:/app/reports:Z
+      - ./yara_rules:/app/yara_rules:ro,Z
+      - ./frontend:/app/frontend:ro,Z
+    environment:
+      - TEMP_DIR=/app/temp_uploads
+      - REPORTS_DIR=/app/reports
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
