@@ -19,7 +19,7 @@ RUN adduser -D scanner
 
 WORKDIR /app
 
-# Create empty directories so FastAPI doesn't crash before Podman mounts your Kali folders
+
 RUN mkdir -p /app/frontend /app/reports /app/temp_uploads /app/yara_rules
 
 COPY requirements.txt .
