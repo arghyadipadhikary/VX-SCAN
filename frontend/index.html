@@ -295,7 +295,7 @@
             return;
         }
         
-        // Reset UI for new scan
+
         downloadBtn.style.display = 'none';
         nlpContainer.style.display = 'none';
         resultsDiv.style.display = 'block';
@@ -321,7 +321,7 @@
             document.getElementById('resPublisher').innerText = data.publisher || "UNKNOWN_ENTITY";
             document.getElementById('resScore').innerText = (data.risk_score || 0) + " / 10";
             
-            // Remove blink animation
+            
             statusEl.className = ""; 
             
             if (data.classification === "SAFE") {
@@ -338,7 +338,6 @@
                 resultsDiv.style.borderLeftColor = "var(--neon-red)";
             }
 
-            // Print NLP Insights
             if (data.nlp_insights && data.nlp_insights.length > 0) {
                 nlpContainer.style.display = "block";
                 data.nlp_insights.forEach(insight => {
