@@ -187,6 +187,6 @@ This tool is intended for **legitimate security research and enterprise extensio
 
 <div align="center">
 
-*Built for the developers who trust no one — not even the Marketplace.*
+Developed by **[Arghyadip Adhikary](https://github.com/arghyadipadhikary)** © 2026
 
 </div>
