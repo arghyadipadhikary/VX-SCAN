@@ -5,7 +5,6 @@ import uuid
 REPORTS_DIR = os.getenv("REPORTS_DIR", "./reports")
 
 def generate_pdf(scan_data: dict) -> str:
-    # Determine classification color
     if scan_data.get("classification") == "SAFE":
         color = "green"
     elif scan_data.get("classification") == "SUSPICIOUS":
@@ -13,7 +12,6 @@ def generate_pdf(scan_data: dict) -> str:
     else:
         color = "red"
         
-    # Generate dynamic HTML blocks for NLP and Warnings
     nlp_html = ""
     if scan_data.get("nlp_insights"):
         nlp_html = "<h3>Behavioral & NLP Insights</h3><ul>"
