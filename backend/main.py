@@ -10,13 +10,9 @@ from report import generate_pdf
 
 app = FastAPI(title="ExtensionGuard API")
 
-# ==========================================
-# BULLETPROOF PATH RESOLUTION
-# ==========================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 
-# Auto-detects if you are inside the Podman container OR running locally on Kali
 FRONTEND_DIR = "/app/frontend" if os.path.exists("/app/frontend") else os.path.join(PROJECT_ROOT, "frontend")
 REPORTS_DIR = "/app/reports" if os.path.exists("/app/reports") else os.path.join(BASE_DIR, "reports")
 
@@ -83,5 +79,4 @@ app.mount("/reports", StaticFiles(directory=REPORTS_DIR), name="reports")
 
 if __name__ == "__main__":
     import uvicorn
-    # FIXED THE SYNTAX ERROR HERE:
     uvicorn.run(app, host="0.0.0.0", port=8000)
