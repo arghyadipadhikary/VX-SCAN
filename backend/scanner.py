@@ -15,9 +15,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 TEMP_DIR = os.getenv("TEMP_DIR", "/app/temp_uploads")
 YARA_RULES_PATH = os.getenv("YARA_RULES_PATH", "/app/yara_rules/rules.yar")
 
-# ==========================================
-# TRUSTED PUBLISHER ALLOWLIST
-# ==========================================
+
 TRUSTED_PUBLISHERS = ["Microsoft", "GitHub", "Google", "Vue", "ms-vscode", "RedHat"]
 
 def calculate_shannon_entropy(text_string: str) -> float:
@@ -35,11 +33,9 @@ def semantic_behavior_analysis(code_text: str) -> dict:
     }
     
     anomaly_score = 0
-    # TUNING 1: Require higher density for alerts. Normal extensions use network and exec occasionally. Malware spams it.
     if risk_vectors["network"] > 5 and risk_vectors["execution"] > 3:
         anomaly_score += 4
     
-    # TUNING 2: Base64 is common for images. Only flag if it's heavily spammed.
     if risk_vectors["obfuscation"] > 15:
         anomaly_score += 3
         
@@ -151,7 +147,6 @@ async def analyze_extension(extension_id: str, progress_cb=None) -> dict:
                 
             files_to_scan = []
             for root, dirs, files in os.walk(extract_dir):
-                # TRUE OPTIMIZATION: Stop os.walk from even entering the folder
                 if 'node_modules' in dirs:
                     dirs.remove('node_modules')
                     
@@ -171,8 +166,6 @@ async def analyze_extension(extension_id: str, progress_cb=None) -> dict:
                     
                 matches = rules.match(filepath=file_path)
                 for match in matches:
-                    # TUNING 5: Context-Aware YARA. 
-                    # Do not fire Node.js alerts on Python/C++ binaries or language files.
                     if "Node" in match.rule and file_name.endswith(('.py', '.pyi', '.pyc', '.pyd', '.h', '.c')):
                         continue
                         
@@ -184,7 +177,6 @@ async def analyze_extension(extension_id: str, progress_cb=None) -> dict:
                             code_content = js_file.read()
                             
                             entropy = calculate_shannon_entropy(code_content)
-                            # TUNING 3: Raised entropy threshold to 6.8
                             if entropy > 6.8: 
                                 report["risk_score"] += 2
                                 report["nlp_insights"].append(f"High entropy ({entropy:.2f}) in {file_name}")
@@ -204,17 +196,12 @@ async def analyze_extension(extension_id: str, progress_cb=None) -> dict:
         else:
             report["warnings"].append(f"Could not download VSIX payload (HTTP {res.status_code}).")
 
-        # TUNING 4: Reputation Dampening for Verified Global Publishers
         is_trusted = publisher_str in TRUSTED_PUBLISHERS and ("M" in installs_str)
         if is_trusted:
             report["risk_score"] = max(0, report["risk_score"] - 15)
             report["warnings"].append("Trust Discount applied for Verified Global Publisher.")
 
-        # ==========================================
-        # FINAL CLASSIFICATION ENGINE
-        # ==========================================
         if report["yara_matches"]:
-            # If it's a trusted giant and the score is low, downgrade to SUSPICIOUS
             if is_trusted and report["risk_score"] < 8:
                 report["classification"] = "SUSPICIOUS"
                 report["warnings"].append("YARA match downgraded due to Trusted Publisher status.")
