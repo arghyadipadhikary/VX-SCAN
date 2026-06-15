@@ -15,7 +15,6 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 TEMP_DIR = os.getenv("TEMP_DIR", "/app/temp_uploads")
 YARA_RULES_PATH = os.getenv("YARA_RULES_PATH", "/app/yara_rules/rules.yar")
 
-
 TRUSTED_PUBLISHERS = ["Microsoft", "GitHub", "Google", "Vue", "ms-vscode", "RedHat"]
 
 def calculate_shannon_entropy(text_string: str) -> float:
